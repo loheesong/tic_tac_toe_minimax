@@ -1,129 +1,194 @@
-# import pygame
-
+import logging
 import math
-from typing import List, Tuple, Union
+import random
+from copy import deepcopy
+from typing import List, Optional, Tuple, Union
 
-class Board:
-    def __init__(self) -> None:
-        self.row = 3
-        self.col = 3
-        self.BLANK = "."
-        self.board = [[self.BLANK for _ in range(self.col)] for _ in range(self.row)]
+# comment out basicConfig to disable logging information
+logging.basicConfig(format='%(levelname)-5s [%(filename)s:%(lineno)d] %(message)s', level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
-    def _is_valid_move(self, location: Tuple[int, int]):
-        """
-        A move is valid if the chosen cell is empty
+BLANK = "."
+board = [[BLANK for _ in range(3)] for _ in range(3)]
+player_action = {f"{i*3+j+1}":(i,j) for i in range(3) for j in range(3)}
 
-        :param location: X coordinate
-        :return: True if the board[x][y] is empty
-        """
-        return True if location in self._empty_square() else False
+def is_valid_move(location: Optional[Tuple[int, int]]):
+    """
+    A move is valid if the chosen cell is empty
 
-    def _empty_square(self) -> List[Tuple[int, int]]:
-        """
-        Each empty square will be added into location list
+    :param location: row and col in a tuple. Can accept None
+    :return: True if the board[x][y] is empty
+    """
+    return location in empty_square()
 
-        :return: a list of locations (tuple)
-        """
-        locations = []
+def empty_square() -> List[Tuple[int, int]]:
+    """
+    Each empty square will be added into location list
 
-        for x, row in enumerate(self.board):
-            for y, square in enumerate(row):
-                if square == self.BLANK:
-                    locations.append((x, y))
+    :return: a list of locations (tuple)
+    """
+    locations = []
 
-        return locations
+    for x, row in enumerate(board):
+        for y, square in enumerate(row):
+            if square == BLANK:
+                locations.append((x, y))
 
-    def is_win(self, player: str):
-        """
-        Checks horizontal, vertical, diagonal if player wins
+    return locations
 
-        :param player: -- a human or a computer
-        :return: True if the player wins
-        """
-        win_state = [
-            [self.board[0][0], self.board[0][1], self.board[0][2]],
-            [self.board[1][0], self.board[1][1], self.board[1][2]],
-            [self.board[2][0], self.board[2][1], self.board[2][2]],
+def is_win(player: str):
+    """
+    Checks horizontal, vertical, diagonal if player wins
 
-            [self.board[0][0], self.board[1][0], self.board[2][0]],
-            [self.board[0][1], self.board[1][1], self.board[2][1]],
-            [self.board[0][2], self.board[1][2], self.board[2][2]],
+    :param player: a human or a computer
+    :return: True if the player wins
+    """
+    win_state = [
+        [board[0][0], board[0][1], board[0][2]],
+        [board[1][0], board[1][1], board[1][2]],
+        [board[2][0], board[2][1], board[2][2]],
 
-            [self.board[0][0], self.board[1][1], self.board[2][2]],
-            [self.board[2][0], self.board[1][1], self.board[0][2]],
-        ]
-        return True if [player, player, player] in win_state else False
+        [board[0][0], board[1][0], board[2][0]],
+        [board[0][1], board[1][1], board[2][1]],
+        [board[0][2], board[1][2], board[2][2]],
 
-    def move(self, player: str, location: Tuple[int, int]) -> bool:
-        """
-        Place move on board, if the location is valid
+        [board[0][0], board[1][1], board[2][2]],
+        [board[2][0], board[1][1], board[0][2]],
+    ]
+    return [player, player, player] in win_state
 
-        :param player: the current player
-        :param location: location of move
-        :return: True if move is successfully placed
-        """
-        row, col = location
-        if self._is_valid_move(location):
-            self.board[row][col] = player
-            return True
-        else:
-            return False
+def game_over(human_icon, ai_icon):
+    """
+    End game loop
+    """
+    return is_win(human_icon) or is_win(ai_icon)
 
-    def minimax(self, depth: int, maximizingPlayer):
-        """
-        Minimax algorithm
+def move(player: str, location: Tuple[int, int]) -> bool:
+    """
+    Place move on board, if the location is valid
 
-        :param depth: node index in the tree (0 <= depth <= 9)
-        :param player: an human or a computer
-        :return: a list with [the best row, best col, best score]
-        """
-        """if depth == 0 or game over in position
-            return static evaluation of position
-    
-        if maximizingPlayer:
-            maxEval = -math.inf
-            for each child of position
-                eval = minimax(child, depth - 1, False)
-                maxEval = max(maxEval, eval)
-            return maxEval
-        else:
-            minEval = math.inf
-            for each child of position
-                eval = minimax(child, depth - 1, true)
-                minEval = min(minEval, eval)
-            return minEval"""
-        pass 
+    :param player: the current player
+    :param location: location of move
+    :return: True if move is successfully placed
+    """
+    row, col = location
+    if is_valid_move(location):
+        board[row][col] = player
+        return True
+    else:
+        return False
 
-    def print_board(self):
-        """
-        Pretty print board
-        """
-        for i in self.board:
-            print(i)
+def human_turn(human_icon: str):
+    """
+    Sanitise human input and attempts to move
+
+    :param human_icon: the icon to be placed on board
+    """
+    logger.debug("human turn")
+    location: Optional[Tuple[int, int]] = None
+
+    # take input from player until valid move is given
+    while not is_valid_move(location):
+        try:
+            location = player_action.get(input("Move [1-9]? "))
+            if not is_valid_move(location):
+                print("Invalid move.")
+        except KeyboardInterrupt:
+            print("\nExit tictactoe")
+            exit()
+
+    logger.debug(f"Player move: {location}")
+
+    move(human_icon, location)
+    print_board()
+
+def ai_turn_random(ai_icon: str):
+    """
+    Randomly places
+    """
+    logger.debug("ai turn") 
+
+    location = random.choice(empty_square())
+    move(ai_icon, location)
+    print_board()
+
+def ai_turn(ai_icon: str):
+    # rmb deep copy list before calling minimax
+    board_copy = deepcopy(board)
+    minimax(board_copy) 
+
+
+def minimax(board_copy, depth: int, maximizingPlayer: bool):
+    """
+    Minimax algorithm
+
+    :param board: board copy 
+    :param depth: node index in the tree (0 <= depth <= 9)
+    :param player: an human or a computer
+    :return: a list with [the best row, best col, best score]
+    """
+    pass
+
+
+def print_board():
+    """
+    Pretty print board
+    """
+    for i in board:
+        print(i)
 
 def main():
     """Main game logic here"""
-    board = Board()
-    turn = 0
-    while True:
-        player_input = tuple(int(i) for i in input(f"Location: ").split())
-        print(f"Location: {player_input} Turn: {turn}")
-        # player 1
-        if turn % 2 == 0:
-            board.move("X", player_input) 
-        # player 2 
-        else:
-            board.move("O", player_input) 
+    human_icon = ""
+    ai_icon = ""
+    human_start_first = ""
 
-        board.print_board()
-        if board.is_win("X"):
-            print("X won")
-            break
-        elif board.is_win("O"):
-            print("O won")
-            break
-        turn += 1
+    # take human choice of icon 
+    while human_icon != "X" and human_icon != "O":
+        try:
+            human_icon = input("X or O: ").upper() 
+        except KeyboardInterrupt:
+            print("\nExit tictactoe") 
+            exit()
+    ai_icon = "O" if human_icon == "X" else "X"
+    logger.debug(f"Human: {human_icon} AI: {ai_icon}")
+
+    # # human start first or second 
+    while human_start_first != "Y" and human_start_first != "N":
+        try:
+            human_start_first = input("Start first? [y/n] ").upper()
+        except KeyboardInterrupt:
+            print("\nExit tictactoe") 
+            exit() 
+    logger.debug(f"First: {'Human' if human_start_first == 'Y' else 'AI'}")
+    
+    # while there is still empty squares left in board
+    while len(empty_square()) != 0:
+        if human_start_first == "Y":
+            human_turn(human_icon)
+            if game_over(human_icon, ai_icon):
+                break
+            human_start_first= ""
+
+        ai_turn_random(ai_icon)
+        if game_over(human_icon, ai_icon):
+                break
+
+        human_turn(human_icon)
+        if game_over(human_icon, ai_icon):
+                break
+    
+    # game over message
+    if is_win(human_icon):
+        print("YOU WIN")
+    elif is_win(ai_icon):
+        print("AI WINS") 
+    else:
+        print("DRAW")
+
+def test():
+    ai_turn("X") 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    test()
