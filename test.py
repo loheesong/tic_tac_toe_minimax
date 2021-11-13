@@ -3,9 +3,9 @@ from math import inf as infinity
 HUMAN = -1
 COMP = +1
 board = [
-    [-1, -1, 1],
-    [1, -1, 0],
-    [-1, 1, 0],
+    [1, -1, -1],
+    [1, 1, 0],
+    [-1, -1, 0],
 ]
 
 def game_over(state):
