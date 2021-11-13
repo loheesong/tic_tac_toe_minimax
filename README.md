@@ -35,3 +35,11 @@ In this situation, the optimal move would be to play 6 but instead 5 was played.
 The AI decided that 2 was the better move so it was played. 6 was then played to try to block the AI but the AI still won due to having 2 opportunites to win. 
 
 ![](https://github.com/loheesong/tic_tac_toe_minimax/blob/master/README/limitation2.JPG)
+
+## Technology
+
+Python 3.9.1
+
+## How to Use
+
+Just download tictactoe.py and run, there is no need to install other packages as no additional packages were used. 
