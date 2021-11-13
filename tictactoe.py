@@ -1,14 +1,14 @@
 import logging
 import math
 import random
-from typing import List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 """
 Play Tic Tac Toe with a computer that is based on the minimax algorithm.
 """
 
 # comment out basicConfig to disable logging information
-logging.basicConfig(format='%(levelname)-5s [%(filename)s:%(lineno)d] %(message)s', level=logging.DEBUG)
+# logging.basicConfig(format='%(levelname)-5s [%(filename)s:%(lineno)d] %(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 BLANK = 0
@@ -232,7 +232,11 @@ def main():
     human_start_first = human_choose_start_first()
     logger.debug(f"First: {'Human' if human_start_first == 'Y' else 'AI'}")
     
+    chosen_ai = human_choose_ai()
+    logger.debug(f"Chosen_ai: {chosen_ai}")
+
     print_board(human_icon, ai_icon)
+
     # while there is still empty squares left in board
     while len(empty_square(board)) != 0:
         if human_start_first == "Y":
@@ -241,7 +245,7 @@ def main():
                 break
             human_start_first= ""
 
-        ai_turn_minimax(human_icon, ai_icon)
+        chosen_ai(human_icon, ai_icon)
         if game_over(board):
                 break
 
@@ -284,6 +288,27 @@ def human_choose_start_first():
             print("\nExit tictactoe") 
             exit()  
     return human_start_first
+
+def human_choose_ai() -> Callable[[str, str], None]:
+    """
+    Let human choose between random or minimax
+
+    :return: ai_turn_minimax or ai_turn_random function
+    """
+    chosen_ai = None
+    ai_programs = {"1": "minimax", "2": "random"}
+
+    while chosen_ai not in ai_programs.values():
+        try:
+            chosen_ai = ai_programs.get(input("Choose AI: 1 for minimax, 2 for random.\nChoice: ").strip())
+        except KeyboardInterrupt:
+            print("\nExit tictactoe") 
+            exit()
+
+    if chosen_ai == "minimax":
+        return ai_turn_minimax
+    elif chosen_ai == "random":
+        return ai_turn_random
 
 def game_over_message():
     """
