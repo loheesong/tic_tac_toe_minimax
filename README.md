@@ -1,6 +1,6 @@
 # Tic Tac Toe Minimax
 
-A Python implementation of Minimax AI Algorithm for the game Tic Tac Toe.
+A command line Python implementation of Minimax AI Algorithm for the game Tic Tac Toe.
 
 ## How to Play
 
